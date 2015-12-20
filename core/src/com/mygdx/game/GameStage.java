@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -16,6 +17,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.mygdx.game.utils.EndlessCatmullRomSpline;
 
 public class GameStage extends Stage {
 
@@ -24,18 +26,33 @@ public class GameStage extends Stage {
 	private final FirstPersonCameraController camCtrl;
 
 	private final SpriteBatch batch;
-	private final ShapeRenderer shapeRenderer;
+	private final ShapeRenderer uiShapeRenderer;
 	private final Table rootTable;
 	private final Vector3 tmp = new Vector3();
 	private final Skin skin;
+
+	private final ShapeRenderer shapeRenderer;
+   int k;
+   Vector3[] points;
+   EndlessCatmullRomSpline spline;
+   float splineAdvanceDelay;
 
 	public GameStage(Viewport viewport) {
 		super(viewport);
 
 		batch = new SpriteBatch();
-		shapeRenderer = new ShapeRenderer();
-		shapeRenderer.setAutoShapeType(true);
+		uiShapeRenderer = new ShapeRenderer();
+		uiShapeRenderer.setAutoShapeType(true);
 
+		shapeRenderer = new ShapeRenderer();
+	   k = 100; //increase k for more fidelity to the spline
+	   points = new Vector3[k];
+	   for (int i = 0; i < k; i++)
+	   	points[i] = new Vector3();
+	   spline = new EndlessCatmullRomSpline(6, new Vector3());
+	   splineAdvanceDelay = 0;
+		
+		
 		cameraUI = new OrthographicCamera(viewport.getScreenWidth(), viewport.getScreenHeight());
 		cameraUI.position.set(viewport.getScreenWidth() / 2, viewport.getScreenHeight() / 2, 0);
 		cameraUI.update();
@@ -72,7 +89,8 @@ public class GameStage extends Stage {
 		cameraUI.position.set(viewport.getScreenWidth() / 2, viewport.getScreenHeight() / 2, 0);
 		cameraUI.update();
 		batch.setProjectionMatrix(cameraUI.combined);
-		shapeRenderer.setProjectionMatrix(cameraUI.combined);
+		uiShapeRenderer.setProjectionMatrix(cameraUI.combined);
+		shapeRenderer.setProjectionMatrix(getViewport().getCamera().combined);
 
 		// Resize the root table that will auto-scale if needed
 		rootTable.setSize(viewport.getScreenWidth(), viewport.getScreenHeight());
@@ -82,12 +100,19 @@ public class GameStage extends Stage {
 	public void act(float delta) {
 		super.act(delta);
 		camCtrl.update(delta);
+		
+		splineAdvanceDelay += delta;
+		if (splineAdvanceDelay > 1) {
+			splineAdvanceDelay -= 1;
+			spline.advance();
+		}
 	}
 
 	@Override
 	public void dispose() {
 		super.dispose();
 		batch.dispose();
+		uiShapeRenderer.dispose();
 		shapeRenderer.dispose();
 		skin.dispose();
 	}
@@ -102,8 +127,18 @@ public class GameStage extends Stage {
 		}
 		batch.end();
 
-		shapeRenderer.begin();
-		rootTable.drawDebug(shapeRenderer);
+		uiShapeRenderer.begin();
+		rootTable.drawDebug(uiShapeRenderer);
+		uiShapeRenderer.end();
+		
+		shapeRenderer.setProjectionMatrix(getViewport().getCamera().combined);
+		shapeRenderer.begin(ShapeType.Line);
+		int n = k - 1;
+		float denom = n;
+		for (int i = 0; i < n; ++i) {
+			shapeRenderer.line(spline.valueAt(points[i], i / denom), spline.valueAt(points[i + 1], (i + 1) / denom));
+		}
 		shapeRenderer.end();
+
 	}
 }
