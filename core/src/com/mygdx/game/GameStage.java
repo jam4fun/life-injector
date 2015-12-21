@@ -62,7 +62,7 @@ public class GameStage extends Stage {
 		cameraWorld.update();
 
 		// FIXME: Why does this yield NaN?
-		// splineCamTargetT = spline.locate(spline.controlPoints[1]);
+		splineCamTargetT = spline.locate(spline.controlPoints[1]);
 		splineCamTargetT = 0.1f;
 
 		cameraUI = new OrthographicCamera(viewport.getScreenWidth(), viewport.getScreenHeight());
@@ -129,13 +129,14 @@ public class GameStage extends Stage {
 
 			// The target T value which the camera must be at before the next spline advance
 			splineCamTargetT = spline.locate(spline.controlPoints[1]);
-		} else {
-			// Calculate how close we are to the next advance
-			float splineAdvanceFrac = splineAdvanceDelay / splineAdvanceLimit;
-			spline.valueAt(splineCamPos, splineCamTargetT * splineAdvanceFrac);
-			spline.valueAt(splineCamDir, splineCamTargetT * splineAdvanceFrac * 1.1f); // Not sure how far ahead to aim...
-			splineCamDir.sub(splineCamPos).nor();
 		}
+		// Calculate how close we are to the next advance
+		float splineAdvanceFrac = splineAdvanceDelay / splineAdvanceLimit;
+		float t = splineCamTargetT * splineAdvanceFrac;
+		spline.valueAt(splineCamPos, t);
+		spline.valueAt(splineCamDir, t * 1.1f); // Not sure how far ahead to aim...
+		splineCamDir.sub(splineCamPos).nor();
+
 		cameraWorld.position.lerp(splineCamPos, splineCameraLerpAlpha);
 		cameraWorld.direction.lerp(splineCamDir, splineCameraLerpAlpha);
 		// Not sure what camera up vector works best, but this looks ok for now...
