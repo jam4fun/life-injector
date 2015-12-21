@@ -53,17 +53,15 @@ public class GameStage extends Stage {
 		for (int i = 0; i < k; i++)
 			points[i] = new Vector3();
 		spline = new EndlessCatmullRomSpline(6, new Vector3());
+		spline.advance();
 		splineAdvanceDelay = 0;
+		splineCamTargetT = spline.locate(spline.controlPoints[1]);
 
 		cameraWorld = viewport.getCamera();
 		cameraWorld.position.set(spline.controlPoints[0]);
 		cameraWorld.direction.set(spline.controlPoints[1]).sub(spline.controlPoints[0]).nor();
 		cameraWorld.up.set(Vector3.Y);
 		cameraWorld.update();
-
-		// FIXME: Why does this yield NaN?
-		splineCamTargetT = spline.locate(spline.controlPoints[1]);
-		splineCamTargetT = 0.1f;
 
 		cameraUI = new OrthographicCamera(viewport.getScreenWidth(), viewport.getScreenHeight());
 		cameraUI.position.set(viewport.getScreenWidth() / 2, viewport.getScreenHeight() / 2, 0);
