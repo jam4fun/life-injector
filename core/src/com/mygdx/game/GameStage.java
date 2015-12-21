@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -38,7 +39,11 @@ public class GameStage extends Stage {
 	int k;
 	Vector3[] points;
 	EndlessCatmullRomSpline spline;
-	float splineAdvanceDelay;
+	float splineFrac;
+
+	Vector3 out = new Vector3();
+	int nextCPIdx;
+	float speed = .7f;
 
 	public GameStage(Viewport viewport) {
 		super(viewport);
@@ -52,10 +57,11 @@ public class GameStage extends Stage {
 		points = new Vector3[k];
 		for (int i = 0; i < k; i++)
 			points[i] = new Vector3();
-		spline = new EndlessCatmullRomSpline(6, new Vector3());
+		int len = 7;
+		spline = new EndlessCatmullRomSpline(len, new Vector3());
+		nextCPIdx = len / 2;
 		spline.advance();
-		splineAdvanceDelay = 0;
-		splineCamTargetT = spline.locate(spline.controlPoints[1]);
+		splineFrac = spline.locate(spline.controlPoints[1]);
 
 		cameraWorld = viewport.getCamera();
 		cameraWorld.position.set(spline.controlPoints[0]);
@@ -105,34 +111,40 @@ public class GameStage extends Stage {
 		rootTable.setSize(viewport.getScreenWidth(), viewport.getScreenHeight());
 	}
 
-	// Time in seconds before the spline advances to next segment, affects how fast the camera moves
-	private float splineAdvanceLimit = 2;
 	// Alpha (smoothness) of linear interpolation for camera positioning/targeting
 	private float splineCameraLerpAlpha = 0.2f;
 	// Camera targeting/positioning variables
 	private final Vector3 splineCamPos = new Vector3();
 	private final Vector3 splineCamDir = new Vector3();
-	private float splineCamTargetT;
 
-
+	private void advancePath () {
+		// Advance and re-cache the spline
+		spline.advance();
+		float denom = k - 1;
+		for (int i = 0; i < k; ++i) {
+			spline.valueAt(points[i], i / denom);
+		}
+	}
+	
 	@Override
 	public void act(float delta) {
 		super.act(delta);
 		camCtrl.update(delta);
 
-		splineAdvanceDelay += delta;
-		if (splineAdvanceDelay > splineAdvanceLimit) {
-			splineAdvanceDelay -= splineAdvanceLimit;
-			spline.advance();
+		spline.derivativeAt(out, splineFrac);
+		float offset = (delta * speed) / out.len();
+		splineFrac += offset;
 
-			// The target T value which the camera must be at before the next spline advance
-			splineCamTargetT = spline.locate(spline.controlPoints[1]);
-		}
+
 		// Calculate how close we are to the next advance
-		float splineAdvanceFrac = splineAdvanceDelay / splineAdvanceLimit;
-		float t = splineCamTargetT * splineAdvanceFrac;
-		spline.valueAt(splineCamPos, t);
-		spline.valueAt(splineCamDir, t * 1.1f); // Not sure how far ahead to aim...
+		spline.valueAt(splineCamPos, splineFrac);
+//		System.out.println(Gdx.graphics.getFrameId() + " splineAdvanceDelay = " + splineFrac + " dst = " + splineCamPos.dst2(spline.controlPoints[nextCPIdx]));
+		if (MathUtils.isZero(splineCamPos.dst2(spline.controlPoints[nextCPIdx]), .1f)) {
+			spline.advance();
+			splineFrac = spline.locate(spline.controlPoints[nextCPIdx-2]);
+//			System.out.println(Gdx.graphics.getFrameId() + " Advance spline -> splineAdvanceDelay = " + splineFrac);
+		}
+		spline.valueAt(splineCamDir, splineFrac + offset);
 		splineCamDir.sub(splineCamPos).nor();
 
 		cameraWorld.position.lerp(splineCamPos, splineCameraLerpAlpha);
