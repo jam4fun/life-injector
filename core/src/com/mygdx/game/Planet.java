@@ -42,7 +42,6 @@ public class Planet {
 
 		mass = 4f / 3f * MathUtils.PI * radius * radius * radius * density*500000000;
 		Vector3 dim = new Vector3(1, 1, 1).scl(radius * 2f);
-		System.out.println(mass);
 
 		btSphereShape sphereShape = new btSphereShape(dim.x * 0.5f);
 		object = new GameModelBody(model, name,

@@ -33,7 +33,6 @@ public class WorldScreen implements Screen {
 	private final AssetManager assets;
 
 	private GameModel skybox;
-	private Model sphereModel;
 
 	public WorldScreen(int reqWidth, int reqHeight) {
 		Bullet.init();
@@ -62,7 +61,7 @@ public class WorldScreen implements Screen {
 		worldRenderer = new WorldRenderer(viewport, camera, engine);
 		stage = new GameStage(viewport);
 
-		camera.near = 1f;
+		camera.near = 1e-1f;
 		camera.far = 1e5f;
 		camera.position.set(50, 3, -5);
 		camera.up.set(Vector3.Y);
@@ -165,8 +164,6 @@ public class WorldScreen implements Screen {
 
 	@Override
 	public void dispose() {
-		sphereModel.dispose();
-
 		shapeRenderer.dispose();
 		worldRenderer.dispose();
 		engine.dispose();

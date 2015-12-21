@@ -4,6 +4,7 @@ package com.mygdx.game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.Camera;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
@@ -22,20 +23,22 @@ import com.mygdx.game.utils.EndlessCatmullRomSpline;
 public class GameStage extends Stage {
 
 	private final Camera cameraUI;
+	private final Camera cameraWorld;
 
 	private final FirstPersonCameraController camCtrl;
 
 	private final SpriteBatch batch;
 	private final ShapeRenderer uiShapeRenderer;
 	private final Table rootTable;
-	private final Vector3 tmp = new Vector3();
+	private final Vector3 tmpV1 = new Vector3();
+	private final Vector3 tmpV2 = new Vector3();
 	private final Skin skin;
 
 	private final ShapeRenderer shapeRenderer;
-   int k;
-   Vector3[] points;
-   EndlessCatmullRomSpline spline;
-   float splineAdvanceDelay;
+	int k;
+	Vector3[] points;
+	EndlessCatmullRomSpline spline;
+	float splineAdvanceDelay;
 
 	public GameStage(Viewport viewport) {
 		super(viewport);
@@ -45,14 +48,23 @@ public class GameStage extends Stage {
 		uiShapeRenderer.setAutoShapeType(true);
 
 		shapeRenderer = new ShapeRenderer();
-	   k = 100; //increase k for more fidelity to the spline
-	   points = new Vector3[k];
-	   for (int i = 0; i < k; i++)
-	   	points[i] = new Vector3();
-	   spline = new EndlessCatmullRomSpline(6, new Vector3());
-	   splineAdvanceDelay = 0;
-		
-		
+		k = 100; //increase k for more fidelity to the spline
+		points = new Vector3[k];
+		for (int i = 0; i < k; i++)
+			points[i] = new Vector3();
+		spline = new EndlessCatmullRomSpline(6, new Vector3());
+		splineAdvanceDelay = 0;
+
+		cameraWorld = viewport.getCamera();
+		cameraWorld.position.set(spline.controlPoints[0]);
+		cameraWorld.direction.set(spline.controlPoints[1]).sub(spline.controlPoints[0]).nor();
+		cameraWorld.up.set(Vector3.Y);
+		cameraWorld.update();
+
+		// FIXME: Why does this yield NaN?
+		// splineCamTargetT = spline.locate(spline.controlPoints[1]);
+		splineCamTargetT = 0.1f;
+
 		cameraUI = new OrthographicCamera(viewport.getScreenWidth(), viewport.getScreenHeight());
 		cameraUI.position.set(viewport.getScreenWidth() / 2, viewport.getScreenHeight() / 2, 0);
 		cameraUI.update();
@@ -65,7 +77,7 @@ public class GameStage extends Stage {
 
 		InputMultiplexer multiplexer = new InputMultiplexer();
 		multiplexer.addProcessor(this);
-		multiplexer.addProcessor(camCtrl = new FirstPersonCameraController(viewport.getCamera()));
+		multiplexer.addProcessor(camCtrl = new FirstPersonCameraController(cameraWorld));
 		Gdx.input.setInputProcessor(multiplexer);
 	}
 
@@ -73,10 +85,10 @@ public class GameStage extends Stage {
 	@Override
 	public Vector2 screenToStageCoordinates(Vector2 screenCoords) {
 		Viewport viewport = getViewport();
-		tmp.set(screenCoords.x, screenCoords.y, 1);
-		cameraUI.unproject(tmp, viewport.getScreenX(), viewport.getScreenY(),
+		tmpV1.set(screenCoords.x, screenCoords.y, 1);
+		cameraUI.unproject(tmpV1, viewport.getScreenX(), viewport.getScreenY(),
 				viewport.getScreenWidth(), viewport.getScreenHeight());
-		screenCoords.set(tmp.x, tmp.y);
+		screenCoords.set(tmpV1.x, tmpV1.y);
 		return screenCoords;
 	}
 
@@ -90,22 +102,44 @@ public class GameStage extends Stage {
 		cameraUI.update();
 		batch.setProjectionMatrix(cameraUI.combined);
 		uiShapeRenderer.setProjectionMatrix(cameraUI.combined);
-		shapeRenderer.setProjectionMatrix(getViewport().getCamera().combined);
 
 		// Resize the root table that will auto-scale if needed
 		rootTable.setSize(viewport.getScreenWidth(), viewport.getScreenHeight());
 	}
 
+	// Time in seconds before the spline advances to next segment, affects how fast the camera moves
+	private float splineAdvanceLimit = 2;
+	// Alpha (smoothness) of linear interpolation for camera positioning/targeting
+	private float splineCameraLerpAlpha = 0.2f;
+	// Camera targeting/positioning variables
+	private final Vector3 splineCamPos = new Vector3();
+	private final Vector3 splineCamDir = new Vector3();
+	private float splineCamTargetT;
+
+
 	@Override
 	public void act(float delta) {
 		super.act(delta);
 		camCtrl.update(delta);
-		
+
 		splineAdvanceDelay += delta;
-		if (splineAdvanceDelay > 1) {
-			splineAdvanceDelay -= 1;
+		if (splineAdvanceDelay > splineAdvanceLimit) {
+			splineAdvanceDelay -= splineAdvanceLimit;
 			spline.advance();
+
+			// The target T value which the camera must be at before the next spline advance
+			splineCamTargetT = spline.locate(spline.controlPoints[1]);
+		} else {
+			// Calculate how close we are to the next advance
+			float splineAdvanceFrac = splineAdvanceDelay / splineAdvanceLimit;
+			spline.valueAt(splineCamPos, splineCamTargetT * splineAdvanceFrac);
+			spline.valueAt(splineCamDir, splineCamTargetT * splineAdvanceFrac * 1.1f); // Not sure how far ahead to aim...
+			splineCamDir.sub(splineCamPos).nor();
 		}
+		cameraWorld.position.lerp(splineCamPos, splineCameraLerpAlpha);
+		cameraWorld.direction.lerp(splineCamDir, splineCameraLerpAlpha);
+		// Not sure what camera up vector works best, but this looks ok for now...
+		cameraWorld.up.set(Vector3.Y);
 	}
 
 	@Override
@@ -127,17 +161,26 @@ public class GameStage extends Stage {
 		}
 		batch.end();
 
-		uiShapeRenderer.begin();
-		rootTable.drawDebug(uiShapeRenderer);
-		uiShapeRenderer.end();
-		
-		shapeRenderer.setProjectionMatrix(getViewport().getCamera().combined);
+//		uiShapeRenderer.setProjectionMatrix(cameraUI.combined);
+//		uiShapeRenderer.begin();
+//		rootTable.drawDebug(uiShapeRenderer);
+//		uiShapeRenderer.end();
+
+		shapeRenderer.setProjectionMatrix(cameraWorld.combined);
 		shapeRenderer.begin(ShapeType.Line);
+		shapeRenderer.setColor(Color.WHITE);
 		int n = k - 1;
 		float denom = n;
 		for (int i = 0; i < n; ++i) {
 			shapeRenderer.line(spline.valueAt(points[i], i / denom), spline.valueAt(points[i + 1], (i + 1) / denom));
 		}
+		// For debugging camera position/direction, can be removed later
+		float s = 1e-3f;
+		shapeRenderer.setColor(Color.RED);
+		shapeRenderer.box(splineCamPos.x - s / 2, splineCamPos.y - s / 2, splineCamPos.z + s / 2, s, s, s);
+		shapeRenderer.setColor(Color.GREEN);
+		shapeRenderer.line(splineCamPos.x, splineCamPos.y, splineCamPos.z,
+				splineCamPos.x + splineCamDir.x, splineCamPos.y + splineCamDir.y, splineCamPos.z + splineCamDir.z);
 		shapeRenderer.end();
 
 	}
