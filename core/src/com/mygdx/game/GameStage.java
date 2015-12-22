@@ -41,7 +41,6 @@ public class GameStage extends Stage {
 	EndlessCatmullRomSpline spline;
 	float splineFrac;
 
-	Vector3 out = new Vector3();
 	int nextCPIdx;
 	float speed = .7f;
 
@@ -57,7 +56,7 @@ public class GameStage extends Stage {
 		points = new Vector3[k];
 		for (int i = 0; i < k; i++)
 			points[i] = new Vector3();
-		int len = 7;
+		int len = 6;
 		spline = new EndlessCatmullRomSpline(len, new Vector3());
 		nextCPIdx = len / 2;
 		spline.advance();
@@ -131,8 +130,8 @@ public class GameStage extends Stage {
 		super.act(delta);
 		camCtrl.update(delta);
 
-		spline.derivativeAt(out, splineFrac);
-		float offset = (delta * speed) / out.len();
+		spline.derivativeAt(tmpV1, splineFrac);
+		float offset = (delta * speed) / tmpV1.len();
 		splineFrac += offset;
 
 
@@ -144,8 +143,7 @@ public class GameStage extends Stage {
 			splineFrac = spline.locate(spline.controlPoints[nextCPIdx-2]);
 //			System.out.println(Gdx.graphics.getFrameId() + " Advance spline -> splineAdvanceDelay = " + splineFrac);
 		}
-		spline.valueAt(splineCamDir, splineFrac + offset);
-		splineCamDir.sub(splineCamPos).nor();
+		spline.valueAt(splineCamDir, splineFrac + offset).sub(splineCamPos).nor();
 
 		cameraWorld.position.lerp(splineCamPos, splineCameraLerpAlpha);
 		cameraWorld.direction.lerp(splineCamDir, splineCameraLerpAlpha);

@@ -38,9 +38,9 @@ public class EndlessCatmullRomSpline extends CatmullRomSpline<Vector3> {
 	}
 
 	private static Vector3 generateControlPoint(Vector3 from, Vector3 to) {
-		float x = randomSigned(1f, 6f);
-		float y = randomSigned(1f, 6f);
-		float z = randomSigned(1f, 6f);
+		float x = randomSigned(3f, 9f);
+		float y = randomSigned(3f, 9f);
+		float z = randomSigned(3f, 9f);
 		return to.set(from).add(x, y, z);
 	}
 }

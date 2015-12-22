@@ -24,13 +24,13 @@ public class WorldScreen implements Screen {
 	private final ModelLoader.ModelParameters modelParameters;
 	private final TextureLoader.TextureParameter textureParameter;
 
-	private final PhysicsEngine engine;
-	private final WorldRenderer worldRenderer;
+	private PhysicsEngine engine;
+	private WorldRenderer worldRenderer;
 	private final PerspectiveCamera camera;
 	private final Viewport viewport;
-	private final GameStage stage;
+	private GameStage stage;
 	private final ShapeRenderer shapeRenderer;
-	private final AssetManager assets;
+	public final AssetManager assets;
 
 	private GameModel skybox;
 
@@ -54,6 +54,17 @@ public class WorldScreen implements Screen {
 		camera = new PerspectiveCamera(67, reqWidth, reqHeight);
 		viewport = new FitViewport(reqWidth, reqHeight, camera);
 
+		// Load assets
+		assets.load("nasa_sun.png", Texture.class, textureParameter);
+		assets.load("planet_Dank_1182.png", Texture.class, textureParameter);
+		assets.load("planet_Quom_2449.png", Texture.class, textureParameter);
+		assets.load("Planet_New_Aruba_5128.png", Texture.class, textureParameter);
+		assets.load("planet_Muunilinst_1406.png", Texture.class, textureParameter);
+		assets.load("skybox.g3db", Model.class, modelParameters);
+	}
+
+	@Override
+	public void show() {
 
 		engine = new PhysicsEngine();
 		engine.setDebugMode(btIDebugDraw.DebugDrawModes.DBG_DrawWireframe);
@@ -66,15 +77,6 @@ public class WorldScreen implements Screen {
 		camera.position.set(50, 3, -5);
 		camera.up.set(Vector3.Y);
 		camera.lookAt(Vector3.Zero);
-
-		// Load assets
-		assets.load("nasa_sun.png", Texture.class, textureParameter);
-		assets.load("planet_Dank_1182.png", Texture.class, textureParameter);
-		assets.load("planet_Quom_2449.png", Texture.class, textureParameter);
-		assets.load("Planet_New_Aruba_5128.png", Texture.class, textureParameter);
-		assets.load("planet_Muunilinst_1406.png", Texture.class, textureParameter);
-		assets.load("skybox.g3db", Model.class, modelParameters);
-		assets.finishLoading();
 
 		// Planets
 		Planet sun = new Planet("nasa_sun.png", assets.get("nasa_sun.png", Texture.class),
@@ -106,18 +108,12 @@ public class WorldScreen implements Screen {
 			engine.addEntity(planet.object);
 
 		// Skybox
-		assets.finishLoadingAsset("skybox.g3db");
 		Model skyboxModel = assets.get("skybox.g3db");
 		skyboxModel.materials.first().set(new ColorAttribute(ColorAttribute.AmbientLight, Color.LIGHT_GRAY));
 		Vector3 skyboxScale = new Vector3(1, 1, 1).scl(1000);
 		skybox = new GameModel(skyboxModel, "skybox",
 				new Vector3(), new Vector3(), skyboxScale);
 		engine.addEntity(skybox);
-	}
-
-	@Override
-	public void show() {
-
 	}
 
 	@Override
