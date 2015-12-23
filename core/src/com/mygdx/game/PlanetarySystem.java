@@ -1,16 +1,14 @@
 package com.mygdx.game;
 
-import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 
-public class PlanetarySystem extends GameObject{
+public class PlanetarySystem extends GameObject {
 
 	public Array<Planet> planets = new Array<Planet>();
 
 	public PlanetarySystem(String name) {
 		super(name);
 	}
-
 
 	@Override
 	public void update(float deltaTime) {
@@ -21,18 +19,13 @@ public class PlanetarySystem extends GameObject{
 					continue;
 				}
 				Planet b = planets.get(j);
-				a.applyForce(a.forceFrom(b), deltaTime);
+				a.object.body.applyCentralForce(a.forceFrom(b));
 			}
 		}
-
-//		planets.get(1).object.body.getWorldTransform().getTranslation(tmp);
-//		System.out.println(Vector3.Zero.dst(tmp));
 	}
-
-	Vector3 tmp = new Vector3();
 
 	@Override
 	public void dispose() {
-
+		planets.clear();
 	}
 }

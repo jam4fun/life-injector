@@ -55,12 +55,12 @@ public class WorldScreen implements Screen {
 		viewport = new FitViewport(reqWidth, reqHeight, camera);
 
 		// Load assets
-		assets.load("nasa_sun.png", Texture.class, textureParameter);
-		assets.load("planet_Dank_1182.png", Texture.class, textureParameter);
-		assets.load("planet_Quom_2449.png", Texture.class, textureParameter);
-		assets.load("Planet_New_Aruba_5128.png", Texture.class, textureParameter);
-		assets.load("planet_Muunilinst_1406.png", Texture.class, textureParameter);
-		assets.load("skybox.g3db", Model.class, modelParameters);
+		assets.load("models/g3db/nasa_sun.png", Texture.class, textureParameter);
+		assets.load("models/g3db/planet_Dank_1182.png", Texture.class, textureParameter);
+		assets.load("models/g3db/planet_Quom_2449.png", Texture.class, textureParameter);
+		assets.load("models/g3db/Planet_New_Aruba_5128.png", Texture.class, textureParameter);
+		assets.load("models/g3db/planet_Muunilinst_1406.png", Texture.class, textureParameter);
+		assets.load("models/g3db/skybox.g3db", Model.class, modelParameters);
 	}
 
 	@Override
@@ -79,20 +79,20 @@ public class WorldScreen implements Screen {
 		camera.lookAt(Vector3.Zero);
 
 		// Planets
-		Planet sun = new Planet("nasa_sun.png", assets.get("nasa_sun.png", Texture.class),
+		Planet sun = new Planet("nasa_sun.png", assets.get("models/g3db/nasa_sun.png", Texture.class),
 				20, 1, new Vector3(0, 0, 0), new Vector3(0, 0, 0), new Vector3(0, 0.05f, 0));
 		sun.object.modelInstance.materials.first().set(new ColorAttribute(ColorAttribute.AmbientLight, Color.WHITE));
 
-		Planet planet0 = new Planet("Planet_New_Aruba_5128.png", assets.get("Planet_New_Aruba_5128.png", Texture.class),
+		Planet planet0 = new Planet("Planet_New_Aruba_5128.png", assets.get("models/g3db/Planet_New_Aruba_5128.png", Texture.class),
 				0.5f, 1, new Vector3(80, 0, 5), new Vector3(0, 0, 1), new Vector3(0, 0.1f, 0));
 
-		Planet planet1 = new Planet("planet_Muunilinst_1406.png", assets.get("planet_Muunilinst_1406.png", Texture.class),
+		Planet planet1 = new Planet("planet_Muunilinst_1406.png", assets.get("models/g3db/planet_Muunilinst_1406.png", Texture.class),
 				4, 1, new Vector3(100, 0, -20), new Vector3(0, 0, 1), new Vector3(0, 0.1f, 0));
 
-		Planet planet2 = new Planet("planet_Dank_1182.png", assets.get("planet_Dank_1182.png", Texture.class),
+		Planet planet2 = new Planet("planet_Dank_1182.png", assets.get("models/g3db/planet_Dank_1182.png", Texture.class),
 				2, 1, new Vector3(120, 0, 10), new Vector3(0, 0, 1), new Vector3(0, 0.1f, 0));
 
-		Planet planet3 = new Planet("planet_Quom_2449.png", assets.get("planet_Quom_2449.png", Texture.class),
+		Planet planet3 = new Planet("planet_Quom_2449.png", assets.get("models/g3db/planet_Quom_2449.png", Texture.class),
 				1, 1, new Vector3(150, 0, 0), new Vector3(0, 0, 1), new Vector3(0, 0.1f, 0));
 
 		PlanetarySystem system = new PlanetarySystem("uncharted system");
@@ -108,7 +108,7 @@ public class WorldScreen implements Screen {
 			engine.addEntity(planet.object);
 
 		// Skybox
-		Model skyboxModel = assets.get("skybox.g3db");
+		Model skyboxModel = assets.get("models/g3db/skybox.g3db");
 		skyboxModel.materials.first().set(new ColorAttribute(ColorAttribute.AmbientLight, Color.LIGHT_GRAY));
 		Vector3 skyboxScale = new Vector3(1, 1, 1).scl(1000);
 		skybox = new GameModel(skyboxModel, "skybox",
