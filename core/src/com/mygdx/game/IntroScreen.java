@@ -23,9 +23,9 @@ public class IntroScreen implements Screen {
 	private int screenHeight;
 
 	private final float scrollSpeed = 0.65f; // unit per second
-	private final float maxScrollTime = 30; // in seconds
+	private final float maxScrollTime = 100; // in seconds
 
-	private String text = "L I F E   I N J E C T O R\n\nby the Jam4Fun Team\n\n\nThankfully it is a long period\nof peace in the universe\nand life is thriving everywhere.\n\nHowever a huge fearsome comet,\nknown as The Big Mower,\nis destroying every life form\nalong its winding path\nall around the universe.\n\nOur hero's mission is to follow\nthe tail of the comet\nat the maximum speed,\navoiding obstacles and restoring\nas much life as he can\nbefore it's too late to do so.\n\nIt is a desperate run,\nbut a necessary sacrifice...";
+	private String text = "L I F E   I N J E C T O R\n\nby the Jam4Fun Team\n\n\nThankfully it has been a\nlong period of peace\nin the universe\nand life is thriving everywhere.\n\nHowever a huge fearsome comet,\nknown as The Big Mower,\nis destroying every life form\nalong its winding path\nacross the universe.\n\nYour mission, as the hero\nof this story, is to follow\nthe tail of the comet\nat the maximum speed,\navoiding obstacles and restoring\nas much life as you can\nbefore it's too late to do so.\n\nIt is a desperate run,\na necessary sacrifice...\n\nMay the force be with you!!!";
 
 	float elapsed;
 	WorldScreen worldScreen;
@@ -47,7 +47,7 @@ public class IntroScreen implements Screen {
 		Gdx.input.setInputProcessor(new InputAdapter() {
 			@Override
 			public boolean touchDown (int screenX, int screenY, int pointer, int button) {
-				if (worldScreen != null && worldScreenFinishedLoading) {
+				if (worldScreenFinishedLoading) {
 					SpaceGame.game.setScreen(worldScreen);
 					return true;
 				}
@@ -66,17 +66,19 @@ public class IntroScreen implements Screen {
 	@Override
 	public void render (float delta) {
 		elapsed += delta;
-		System.out.println(elapsed);
-		if (elapsed > 0) {
-			if (!worldScreenFinishedLoading) {
-				worldScreenFinishedLoading = worldScreen.assets.update();
-			} else if (elapsed > maxScrollTime) {
-				SpaceGame.game.setScreen(worldScreen);
-				return;
-			}
+
+		if (!worldScreenFinishedLoading) {
+			worldScreenFinishedLoading = worldScreen.assets.update();
 		}
 
-		camera3d.translate(0.0f, -delta * scrollSpeed, 0.0f);
+		boolean repeatText = elapsed > maxScrollTime;
+		if (repeatText) {
+			camera3d.translate(0.0f, elapsed * scrollSpeed, 0.0f);
+			elapsed = 0;
+		}
+		else {
+			camera3d.translate(0.0f, -delta * scrollSpeed, 0.0f);
+		}
 		camera3d.update(false);
 
 		GL20 gl = Gdx.graphics.getGL20();
@@ -106,7 +108,7 @@ public class IntroScreen implements Screen {
 		camera3d.viewportWidth = camWidth;
 		camera3d.viewportHeight = camHeight;
 		camera3d.update();
-		camera3d.translate(0.0f, -8.0f, 3.0f);
+		camera3d.translate(0.0f, -7.5f, 3.0f);
 		camera3d.lookAt(0.0f, 0.0f, 0.0f);
 		camera3d.update(true);
 	}
