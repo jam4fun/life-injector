@@ -22,9 +22,10 @@ public class IntroScreen implements Screen {
 	private int screenWidth;
 	private int screenHeight;
 
-	private final float scrollSpeed = 1.0f; // unit per second
+	private final float scrollSpeed = 0.65f; // unit per second
+	private final float maxScrollTime = 30; // in seconds
 
-	private String text = "Episode IV\n\nA NEW HOPE\n\nIt is a period of civil war.\nRebel spaceships, striking\nfrom a hidden base, have\nwon their first victory\nagainst the evil Galactic\nEmpire.\n\nDuring the battle, Rebel\nspies managed to steal\nsecret plans to the Empire’s\nultimate weapon, the\nDEATH STAR, an armored\nspace station with enough\npower to destroy an entire\nplanet.\n\nPursued by the Empire's\nsinister agents, Princess\nLeia races home aboard her\nstarship, custodian of the\nstolen plans that can save\nher people and restore\nfreedom to the galaxy....";
+	private String text = "L I F E   I N J E C T O R\n\nby the Jam4Fun Team\n\n\nThankfully it is a long period\nof peace in the universe\nand life is thriving everywhere.\n\nHowever a huge fearsome comet,\nknown as The Big Mower,\nis destroying every life form\nalong its winding path\nall around the universe.\n\nOur hero's mission is to follow\nthe tail of the comet\nat the maximum speed,\navoiding obstacles and restoring\nas much life as he can\nbefore it's too late to do so.\n\nIt is a desperate run,\nbut a necessary sacrifice...";
 
 	float elapsed;
 	WorldScreen worldScreen;
@@ -69,7 +70,7 @@ public class IntroScreen implements Screen {
 		if (elapsed > 0) {
 			if (!worldScreenFinishedLoading) {
 				worldScreenFinishedLoading = worldScreen.assets.update();
-			} else if (elapsed > 25) {
+			} else if (elapsed > maxScrollTime) {
 				SpaceGame.game.setScreen(worldScreen);
 				return;
 			}
@@ -105,7 +106,7 @@ public class IntroScreen implements Screen {
 		camera3d.viewportWidth = camWidth;
 		camera3d.viewportHeight = camHeight;
 		camera3d.update();
-		camera3d.translate(0.0f, -7.0f, 3.0f);
+		camera3d.translate(0.0f, -8.0f, 3.0f);
 		camera3d.lookAt(0.0f, 0.0f, 0.0f);
 		camera3d.update(true);
 	}
