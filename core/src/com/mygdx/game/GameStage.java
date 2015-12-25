@@ -32,7 +32,6 @@ public class GameStage extends Stage {
 	private final ShapeRenderer uiShapeRenderer;
 	private final Table rootTable;
 	private final Vector3 tmpV1 = new Vector3();
-	private final Vector3 tmpV2 = new Vector3();
 	private final Skin skin;
 
 	private final ShapeRenderer shapeRenderer;
@@ -59,7 +58,7 @@ public class GameStage extends Stage {
 		int len = 6;
 		spline = new EndlessCatmullRomSpline(len, new Vector3());
 		nextCPIdx = len / 2;
-		spline.advance();
+		advancePath();
 		splineFrac = spline.locate(spline.controlPoints[1]);
 
 		cameraWorld = viewport.getCamera();
@@ -131,19 +130,18 @@ public class GameStage extends Stage {
 		camCtrl.update(delta);
 
 		spline.derivativeAt(tmpV1, splineFrac);
-		float offset = (delta * speed) / tmpV1.len();
-		splineFrac += offset;
-
+		float derivativeLen = tmpV1.len();
+		splineFrac += (delta * speed) / derivativeLen;
 
 		// Calculate how close we are to the next advance
 		spline.valueAt(splineCamPos, splineFrac);
 //		System.out.println(Gdx.graphics.getFrameId() + " splineAdvanceDelay = " + splineFrac + " dst = " + splineCamPos.dst2(spline.controlPoints[nextCPIdx]));
 		if (MathUtils.isZero(splineCamPos.dst2(spline.controlPoints[nextCPIdx]), .1f)) {
-			spline.advance();
+			advancePath();
 			splineFrac = spline.locate(spline.controlPoints[nextCPIdx-2]);
 //			System.out.println(Gdx.graphics.getFrameId() + " Advance spline -> splineAdvanceDelay = " + splineFrac);
 		}
-		spline.valueAt(splineCamDir, splineFrac + offset).sub(splineCamPos).nor();
+		splineCamDir.set(tmpV1).scl(1f / derivativeLen); // Normalized derivative
 
 		cameraWorld.position.lerp(splineCamPos, splineCameraLerpAlpha);
 		cameraWorld.direction.lerp(splineCamDir, splineCameraLerpAlpha);
@@ -179,14 +177,14 @@ public class GameStage extends Stage {
 		shapeRenderer.begin(ShapeType.Line);
 		shapeRenderer.setColor(Color.WHITE);
 		int n = k - 1;
-		float denom = n;
 		for (int i = 0; i < n; ++i) {
-			shapeRenderer.line(spline.valueAt(points[i], i / denom), spline.valueAt(points[i + 1], (i + 1) / denom));
+			shapeRenderer.line(points[i], points[i + 1]);
 		}
 		// For debugging camera position/direction, can be removed later
 		float s = 1e-3f;
+		float hs = s / 2;
 		shapeRenderer.setColor(Color.RED);
-		shapeRenderer.box(splineCamPos.x - s / 2, splineCamPos.y - s / 2, splineCamPos.z + s / 2, s, s, s);
+		shapeRenderer.box(splineCamPos.x - hs, splineCamPos.y - hs, splineCamPos.z + hs, s, s, s);
 		shapeRenderer.setColor(Color.GREEN);
 		shapeRenderer.line(splineCamPos.x, splineCamPos.y, splineCamPos.z,
 				splineCamPos.x + splineCamDir.x, splineCamPos.y + splineCamDir.y, splineCamPos.z + splineCamDir.z);
